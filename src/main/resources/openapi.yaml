@@ -1,0 +1,131 @@
+openapi: 3.0.3
+info:
+  title: Authentication Service API
+  version: 1.0.0
+  description: API per autenticazione utente (login, registrazione, cambio password)
+servers:
+  - url: http://localhost:8080
+paths:
+  /auth/login:
+    post:
+      summary: Effettua il login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login effettuato con successo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Credenziali non valide
+  /auth/register:
+    post:
+      summary: Registra un nuovo account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Registrazione avvenuta con successo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Dati non validi o utente già esistente
+  /auth/change-password:
+    post:
+      summary: Cambia la password dell'utente autenticato
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+      responses:
+        '200':
+          description: Password cambiata con successo
+        '400':
+          description: Dati non validi
+        '401':
+          description: Non autorizzato
+  /auth/validate-token:
+    get:
+      summary: Valida un token JWT e restituisce l'identità dell'utente
+      security:
+        - bearerAuth: [ ]
+      responses:
+        '200':
+          description: Token valido
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  username:
+                    type: string
+        '401':
+          description: Token non valido o scaduto
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    LoginRequest:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+      required:
+        - username
+        - password
+    RegisterRequest:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+        email:
+          type: string
+      required:
+        - username
+        - password
+        - email
+    ChangePasswordRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          description: Nome utente dell'account per cui cambiare la password
+        oldPassword:
+          type: string
+        newPassword:
+          type: string
+      required:
+        - oldPassword
+        - newPassword
+    AuthResponse:
+      type: object
+      properties:
+        jwtToken:
+          type: string
+          description: Token JWT per autenticazione
+        expiresIn:
+          type: integer
+          format: int64
